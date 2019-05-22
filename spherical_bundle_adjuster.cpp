@@ -92,9 +92,9 @@ struct ba_spherical_costfunctor
         X1_translate[2] = X1[2] - t[2];
         ceres::AngleAxisRotatePoint(r, X1_translate, X1_RT);
 
-        residual[0] = X2[0] - X1_RT[0];
-        residual[1] = X2[1] - X1_RT[1];
-        residual[2] = X2[2] - X1_RT[2];
+        residual[0] = (X2[0] - X1_RT[0])*(X2[0] - X1_RT[0]);
+        residual[1] = (X2[1] - X1_RT[1])*(X2[1] - X1_RT[1]);
+        residual[2] = (X2[2] - X1_RT[2])*(X2[2] - X1_RT[2]);
 
         return true;
     }
@@ -174,18 +174,17 @@ void spherical_bundle_adjuster::do_all(const Mat& im_left, const Mat& im_right)
         key_point_right_rect[i].z = cos(key_point_right_radian[i].y);
     }
 
-    // build problem
+    // Bundle adjustment
     Problem problem;
 
-    // 하 씨ㅔ발;
     vector<array<double, 2>> init_d(matches.size());
     for(int i = 0; i < matches.size(); i++)
     {
-        init_d[i][0] = 1;
-        init_d[i][1] = 1;
+        init_d[i][0] = 1000;
+        init_d[i][1] = 1000;
     }
     double init_rot[3] = {0.0, 0.0, 0.0};
-    double init_tran[3] = {1.0, 0.0, 0.0};
+    double init_tran[3] = {1000.0, 0.0, 0.0};
 
     for(int i = 0; i < matches.size(); i++)
     {
@@ -211,5 +210,16 @@ void spherical_bundle_adjuster::do_all(const Mat& im_left, const Mat& im_right)
     std::cout << "rotation vector " << init_rot[0] << ' ' << init_rot[1] << ' ' << init_rot[2]<< std::endl;
     std::cout << "translation vector " << init_tran[0] << ' ' << init_tran[1] << ' ' << init_tran[2] << std::endl;
 
+    Mat d_image;
+    d_image = im_left.clone();
+    circle(d_image, valid_key_left[0].pt, 10, Scalar(255, 0, 0), 5);
+    cv::imwrite("d_image.png", d_image);
+
+    for(int i = 0; i < matches.size(); i++)
+    {
+
+        std::cout << init_d[i][0] << ',' << init_d[i][1] << std::endl;
+    }
+    
     DEBUG_PRINT_OUT("Done."); 
 }
