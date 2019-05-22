@@ -1,0 +1,94 @@
+
+# Created by https://www.gitignore.io/api/cmake,images
+# Edit at https://www.gitignore.io/?templates=cmake,images
+
+### CMake ###
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+
+### CMake Patch ###
+# External projects
+*-prefix/
+
+### Images ###
+# JPEG
+*.jpg
+*.jpeg
+*.jpe
+*.jif
+*.jfif
+*.jfi
+*.JPG
+
+# JPEG 2000
+*.jp2
+*.j2k
+*.jpf
+*.jpx
+*.jpm
+*.mj2
+
+# JPEG XR
+*.jxr
+*.hdp
+*.wdp
+
+# Graphics Interchange Format
+*.gif
+
+# RAW
+*.raw
+
+# Web P
+*.webp
+
+# Portable Network Graphics
+*.png
+
+# Animated Portable Network Graphics
+*.apng
+
+# Multiple-image Network Graphics
+*.mng
+
+# Tagged Image File Format
+*.tiff
+*.tif
+
+# Scalable Vector Graphics
+*.svg
+*.svgz
+
+# Portable Document Format
+*.pdf
+
+# X BitMap
+*.xbm
+
+# BMP
+*.bmp
+*.dib
+
+# ICO
+*.ico
+
+# 3D Images
+*.3dm
+*.max
+
+# End of https://www.gitignore.io/api/cmake,images
+
+#output file
+*.out
+
+#vscode
+.vscode/
