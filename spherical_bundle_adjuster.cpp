@@ -44,7 +44,7 @@ vector<DMatch> spherical_bundle_adjuster::match_two_image(const Mat &descriptor1
     vector<vector<DMatch>> knn_matches;
     matcher->knnMatch(descriptor1, descriptor2, knn_matches, 2);
 
-    const float ratio_thresh = 0.4f;
+    const float ratio_thresh = 0.5f;
     std::vector<DMatch> good_matches;
 
     for (size_t i = 0; i < knn_matches.size(); i++)
@@ -216,10 +216,7 @@ void spherical_bundle_adjuster::do_all(const Mat& im_left, const Mat& im_right)
     cv::imwrite("d_image.png", d_image);
 
     for(int i = 0; i < matches.size(); i++)
-    {
-
         std::cout << init_d[i][0] << ',' << init_d[i][1] << std::endl;
-    }
     
     DEBUG_PRINT_OUT("Done."); 
 }
