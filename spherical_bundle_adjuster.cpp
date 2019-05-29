@@ -108,6 +108,55 @@ struct ba_spherical_costfunctor
     const double cam2_z_;
 };
 
+struct ba_spherical_costfunctor_rot_only
+{
+    ba_spherical_costfunctor_rot_only(double cam1_x, double cam1_y, double cam1_z, double cam2_x, double cam2_y, double cam2_z, double t_1, double t_2, double t_3, double d_1, double d_2)
+    : cam1_x_(cam1_x), cam1_y_(cam1_y), cam1_z_(cam1_z), cam2_x_(cam2_x), cam2_y_(cam2_y), cam2_z_(cam2_z), t_1_(t_1), t_2_(t_2), t_3_(t_3), d_1_(d_1), d_2_(d_2)
+    {}
+
+    // reprojection error
+    template <typename T> bool operator()(const T *const r, T *residual) const
+    {
+        // unit sphere projected point
+        T X1[3], X2[3];
+        T d[2];
+        d[0] = static_cast<T>(d_1_);
+        d[1] = static_cast<T>(d_2_);
+        X1[0] = cam1_x_*d[0];
+        X1[1] = cam1_y_*d[0];
+        X1[2] = cam1_z_*d[0];
+        X2[0] = cam2_x_*d[1];
+        X2[1] = cam2_y_*d[1];
+        X2[2] = cam2_z_*d[1];
+
+        // rotation and translationR(Xn - t)
+        T X1_translate[3], X1_RT[3];
+        X1_translate[0] = X1[0] - t_1_;
+        X1_translate[1] = X1[1] - t_2_;
+        X1_translate[2] = X1[2] - t_3_;
+        ceres::AngleAxisRotatePoint(r, X1_translate, X1_RT);
+
+        residual[0] = (X2[0] - X1_RT[0])*(X2[0] - X1_RT[0]);
+        residual[1] = (X2[1] - X1_RT[1])*(X2[1] - X1_RT[1]);
+        residual[2] = (X2[2] - X1_RT[2])*(X2[2] - X1_RT[2]);
+
+        return true;
+    }
+
+    private:
+    const double cam1_x_;
+    const double cam1_y_;
+    const double cam1_z_;
+    const double cam2_x_;
+    const double cam2_y_;
+    const double cam2_z_;
+    const double t_1_;
+    const double t_2_;
+    const double t_3_;
+    const double d_1_;
+    const double d_2_;
+};
+
 void spherical_bundle_adjuster::do_all(const Mat& im_left, const Mat& im_right)
 {
     //Finding features, making descriptor
@@ -180,12 +229,12 @@ void spherical_bundle_adjuster::do_all(const Mat& im_left, const Mat& im_right)
     vector<array<double, 2>> init_d(matches.size());
     for(int i = 0; i < matches.size(); i++)
     {
-        init_d[i][0] = 1000;
-        init_d[i][1] = 1000;
+        init_d[i][0] = 1;
+        init_d[i][1] = 1;
     }
     double init_rot[3] = {0.0, 0.0, 0.0};
-    double init_tran[3] = {1000.0, 0.0, 0.0};
-
+    double init_tran[3] = {0.0, 0.0, 0.0};
+    /*
     for(int i = 0; i < matches.size(); i++)
     {
         CostFunction *cost_functor = new ceres::AutoDiffCostFunction<ba_spherical_costfunctor, 3, 2, 3, 3>
@@ -197,6 +246,23 @@ void spherical_bundle_adjuster::do_all(const Mat& im_left, const Mat& im_right)
                                                                 , key_point_right_rect[i].z));
         problem.AddResidualBlock(cost_functor, new ceres::HuberLoss(1.0), init_d[i].data(), init_rot, init_tran);
     }
+    */
+    for(int i = 0; i < matches.size(); i++)
+    {
+        CostFunction *cost_functor = new ceres::AutoDiffCostFunction<ba_spherical_costfunctor_rot_only, 3, 3>
+                                    (new ba_spherical_costfunctor_rot_only(key_point_left_rect[i].x
+                                                                , key_point_left_rect[i].y
+                                                                , key_point_left_rect[i].z
+                                                                , key_point_right_rect[i].x
+                                                                , key_point_right_rect[i].y
+                                                                , key_point_right_rect[i].z
+                                                                , init_tran[0]
+                                                                , init_tran[1]
+                                                                , init_tran[2]
+                                                                , init_d[0][0]
+                                                                , init_d[1][0]));
+        problem.AddResidualBlock(cost_functor, new ceres::HuberLoss(1.0), init_rot);
+    }
 
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::ITERATIVE_SCHUR;
@@ -207,7 +273,7 @@ void spherical_bundle_adjuster::do_all(const Mat& im_left, const Mat& im_right)
 
     std::cout << summary.BriefReport() << "\n";
 
-    std::cout << "rotation vector " << init_rot[0] << ' ' << init_rot[1] << ' ' << init_rot[2]<< std::endl;
+    std::cout << "rotation vector in degree " << init_rot[0]/M_PI*180.0 << ' ' << init_rot[1]/M_PI*180.0 << ' ' << init_rot[2]/M_PI*180.0<< std::endl;
     std::cout << "translation vector " << init_tran[0] << ' ' << init_tran[1] << ' ' << init_tran[2] << std::endl;
 
     Mat d_image;
@@ -215,8 +281,8 @@ void spherical_bundle_adjuster::do_all(const Mat& im_left, const Mat& im_right)
     circle(d_image, valid_key_left[0].pt, 10, Scalar(255, 0, 0), 5);
     cv::imwrite("d_image.png", d_image);
 
-    for(int i = 0; i < matches.size(); i++)
-        std::cout << init_d[i][0] << ',' << init_d[i][1] << std::endl;
+    //for(int i = 0; i < matches.size(); i++)
+    //    std::cout << init_d[i][0] << ',' << init_d[i][1] << std::endl;
     
     DEBUG_PRINT_OUT("Done."); 
 }
