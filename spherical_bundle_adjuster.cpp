@@ -1,5 +1,7 @@
 #include "spherical_bundle_adjuster.hpp"
 
+#include <sstream>
+
 using namespace std;
 using namespace cv;
 
@@ -44,7 +46,7 @@ vector<DMatch> spherical_bundle_adjuster::match_two_image(const Mat &descriptor1
     vector<vector<DMatch>> knn_matches;
     matcher->knnMatch(descriptor1, descriptor2, knn_matches, 2);
 
-    const float ratio_thresh = 0.5f;
+    const float ratio_thresh = 0.1f;
     std::vector<DMatch> good_matches;
 
     for (size_t i = 0; i < knn_matches.size(); i++)
@@ -108,6 +110,27 @@ struct ba_spherical_costfunctor
     const double cam2_z_;
 };
 
+void add_residual(Problem& problem
+                , vector<Point3d>& key_point_left_rect
+                , vector<Point3d>& key_point_right_rect
+                , double* init_rot
+                , double* init_tran
+                , vector<array<double, 2>>& init_d
+                , int match_num)
+{
+    for(int i = 0; i < match_num; i++)
+    {
+        CostFunction *cost_functor = new ceres::AutoDiffCostFunction<ba_spherical_costfunctor, 3, 2, 3, 3>
+                                    (new ba_spherical_costfunctor(key_point_left_rect[i].x
+                                                                , key_point_left_rect[i].y
+                                                                , key_point_left_rect[i].z
+                                                                , key_point_right_rect[i].x
+                                                                , key_point_right_rect[i].y
+                                                                , key_point_right_rect[i].z));
+        problem.AddResidualBlock(cost_functor, new ceres::HuberLoss(1.0), init_d[i].data(), init_rot, init_tran);
+    }
+}
+
 struct ba_spherical_costfunctor_rot_only
 {
     ba_spherical_costfunctor_rot_only(double cam1_x, double cam1_y, double cam1_z, double cam2_x, double cam2_y, double cam2_z, double t_1, double t_2, double t_3, double d_1, double d_2)
@@ -157,6 +180,32 @@ struct ba_spherical_costfunctor_rot_only
     const double d_2_;
 };
 
+void add_residual_rot_only(Problem& problem
+                         , vector<Point3d>& key_point_left_rect
+                         , vector<Point3d>& key_point_right_rect
+                         , double* init_rot
+                         , double* init_tran
+                         , vector<array<double, 2>>& init_d
+                         , int match_num)
+{
+    for(int i = 0; i < match_num; i++)
+    {
+        CostFunction *cost_functor = new ceres::AutoDiffCostFunction<ba_spherical_costfunctor_rot_only, 3, 3>
+                                    (new ba_spherical_costfunctor_rot_only(key_point_left_rect[i].x
+                                                                , key_point_left_rect[i].y
+                                                                , key_point_left_rect[i].z
+                                                                , key_point_right_rect[i].x
+                                                                , key_point_right_rect[i].y
+                                                                , key_point_right_rect[i].z
+                                                                , init_tran[0]
+                                                                , init_tran[1]
+                                                                , init_tran[2]
+                                                                , init_d[0][0]
+                                                                , init_d[1][0]));
+        problem.AddResidualBlock(cost_functor, new ceres::HuberLoss(1.0), init_rot);
+    }
+}
+
 void spherical_bundle_adjuster::do_all(const Mat& im_left, const Mat& im_right)
 {
     //Finding features, making descriptor
@@ -181,18 +230,6 @@ void spherical_bundle_adjuster::do_all(const Mat& im_left, const Mat& im_right)
         valid_key_left[i] = key_point_left[matches[i].queryIdx];
         valid_key_right[i] = key_point_right[matches[i].trainIdx];
     }
-
-    // For test imshow
-    vector<DMatch> tmp_match(matches.size());
-    for(int i = 0; i < matches.size(); i++)
-    {
-        tmp_match[i].queryIdx = i;
-        tmp_match[i].trainIdx = i;
-        tmp_match[i].distance = matches[i].distance;
-    }
-    Mat outImage;
-    cv::drawMatches(im_left, valid_key_left, im_right, valid_key_right, tmp_match, outImage);
-    cv::imwrite("test_match.png", outImage);
 
     // convert pixel to radian coordinate, in unit sphere
     // x : longitude
@@ -226,6 +263,7 @@ void spherical_bundle_adjuster::do_all(const Mat& im_left, const Mat& im_right)
     // Bundle adjustment
     Problem problem;
 
+    // initial value
     vector<array<double, 2>> init_d(matches.size());
     for(int i = 0; i < matches.size(); i++)
     {
@@ -234,36 +272,11 @@ void spherical_bundle_adjuster::do_all(const Mat& im_left, const Mat& im_right)
     }
     double init_rot[3] = {0.0, 0.0, 0.0};
     double init_tran[3] = {0.0, 0.0, 0.0};
-    /*
-    for(int i = 0; i < matches.size(); i++)
-    {
-        CostFunction *cost_functor = new ceres::AutoDiffCostFunction<ba_spherical_costfunctor, 3, 2, 3, 3>
-                                    (new ba_spherical_costfunctor(key_point_left_rect[i].x
-                                                                , key_point_left_rect[i].y
-                                                                , key_point_left_rect[i].z
-                                                                , key_point_right_rect[i].x
-                                                                , key_point_right_rect[i].y
-                                                                , key_point_right_rect[i].z));
-        problem.AddResidualBlock(cost_functor, new ceres::HuberLoss(1.0), init_d[i].data(), init_rot, init_tran);
-    }
-    */
-    for(int i = 0; i < matches.size(); i++)
-    {
-        CostFunction *cost_functor = new ceres::AutoDiffCostFunction<ba_spherical_costfunctor_rot_only, 3, 3>
-                                    (new ba_spherical_costfunctor_rot_only(key_point_left_rect[i].x
-                                                                , key_point_left_rect[i].y
-                                                                , key_point_left_rect[i].z
-                                                                , key_point_right_rect[i].x
-                                                                , key_point_right_rect[i].y
-                                                                , key_point_right_rect[i].z
-                                                                , init_tran[0]
-                                                                , init_tran[1]
-                                                                , init_tran[2]
-                                                                , init_d[0][0]
-                                                                , init_d[1][0]));
-        problem.AddResidualBlock(cost_functor, new ceres::HuberLoss(1.0), init_rot);
-    }
 
+    // Add residual with initial value
+    add_residual_rot_only(problem, key_point_left_rect, key_point_right_rect, init_rot, init_tran, init_d, matches.size());
+
+    // Set options and solve problem
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::ITERATIVE_SCHUR;
     options.max_num_iterations = 50;
@@ -275,14 +288,24 @@ void spherical_bundle_adjuster::do_all(const Mat& im_left, const Mat& im_right)
 
     std::cout << "rotation vector in degree " << init_rot[0]/M_PI*180.0 << ' ' << init_rot[1]/M_PI*180.0 << ' ' << init_rot[2]/M_PI*180.0<< std::endl;
     std::cout << "translation vector " << init_tran[0] << ' ' << init_tran[1] << ' ' << init_tran[2] << std::endl;
-
-    Mat d_image;
-    d_image = im_left.clone();
-    circle(d_image, valid_key_left[0].pt, 10, Scalar(255, 0, 0), 5);
-    cv::imwrite("d_image.png", d_image);
-
-    //for(int i = 0; i < matches.size(); i++)
-    //    std::cout << init_d[i][0] << ',' << init_d[i][1] << std::endl;
     
     DEBUG_PRINT_OUT("Done."); 
+
+    // For test imshow
+    vector<DMatch> tmp_match(matches.size());
+    for(int i = 0; i < matches.size(); i++)
+    {
+        tmp_match[i].queryIdx = i;
+        tmp_match[i].trainIdx = i;
+        tmp_match[i].distance = matches[i].distance;
+    }
+    Mat outImage;
+    cv::drawMatches(im_left, valid_key_left, im_right, valid_key_right, tmp_match, outImage);
+    
+    string file_name;
+    stringstream file_name_stream(file_name);
+    file_name_stream << "match_result/";
+    file_name_stream << init_rot[0]/M_PI*180.0 << ',' << init_rot[1]/M_PI*180.0 << ',' << init_rot[2]/M_PI*180.0 << ',' << matches.size() << ".png" << endl;
+    file_name_stream >> file_name;
+    cv::imwrite(file_name, outImage);
 }
