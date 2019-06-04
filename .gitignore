@@ -92,3 +92,6 @@ _deps
 
 #vscode
 .vscode/
+
+#log file
+log*

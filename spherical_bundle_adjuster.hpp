@@ -30,7 +30,8 @@ class spherical_bundle_adjuster
     public:
     void init();
     void deinit();
-    spherical_bundle_adjuster() { init(); }
+    spherical_bundle_adjuster(double roll = 0, double pitch = 0, double yaw = 0)
+    : expected_roll(roll), expected_pitch(pitch), expected_yaw(yaw) { init(); } 
     ~spherical_bundle_adjuster() { deinit(); }
 
     std::vector<cv::KeyPoint> detect_key_point(const cv::Mat &image);
@@ -49,4 +50,8 @@ class spherical_bundle_adjuster
     cv::Mat descriptor_left;
     cv::Mat descriptor_right;
     std::vector<cv::DMatch> matches;
+
+    double expected_roll;
+    double expected_pitch;
+    double expected_yaw;
 };

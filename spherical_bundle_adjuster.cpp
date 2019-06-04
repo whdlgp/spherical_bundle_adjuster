@@ -1,14 +1,15 @@
 #include "spherical_bundle_adjuster.hpp"
 
 #include <sstream>
+#include <fstream>
 
 using namespace std;
 using namespace cv;
 
 void spherical_bundle_adjuster::init()
 {
-    DEBUG_PRINT_OUT("initialize stitcher");
-    START_TIME(initialize_stitcher);
+    DEBUG_PRINT_OUT("initialize feature finder");
+    START_TIME(initialize_feature_finder);
 
     ocl::setUseOpenCL(true);
 
@@ -17,7 +18,7 @@ void spherical_bundle_adjuster::init()
     descriptor_extractor = xfeatures2d::SURF::create();
     matcher = DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
 
-    STOP_TIME(initialize_stitcher);
+    STOP_TIME(initialize_feature_finder);
 }
 
 void spherical_bundle_adjuster::deinit()
@@ -270,7 +271,7 @@ void spherical_bundle_adjuster::do_all(const Mat& im_left, const Mat& im_right)
         init_d[i][0] = 1;
         init_d[i][1] = 1;
     }
-    double init_rot[3] = {0.0, 0.0, 0.0};
+    double init_rot[3] = {expected_roll/180*M_PI, expected_pitch/180*M_PI, expected_yaw/180*M_PI};
     double init_tran[3] = {0.0, 0.0, 0.0};
 
     // Add residual with initial value
@@ -286,6 +287,7 @@ void spherical_bundle_adjuster::do_all(const Mat& im_left, const Mat& im_right)
 
     std::cout << summary.BriefReport() << "\n";
 
+    std::cout << "expected rotation vector " << expected_roll << ' ' << expected_pitch << ' ' << expected_yaw << ' ' << std::endl;
     std::cout << "rotation vector in degree " << init_rot[0]/M_PI*180.0 << ' ' << init_rot[1]/M_PI*180.0 << ' ' << init_rot[2]/M_PI*180.0<< std::endl;
     std::cout << "translation vector " << init_tran[0] << ' ' << init_tran[1] << ' ' << init_tran[2] << std::endl;
     
@@ -302,10 +304,17 @@ void spherical_bundle_adjuster::do_all(const Mat& im_left, const Mat& im_right)
     Mat outImage;
     cv::drawMatches(im_left, valid_key_left, im_right, valid_key_right, tmp_match, outImage);
     
+    // Save test match image and log file
     string file_name;
     stringstream file_name_stream(file_name);
     file_name_stream << "match_result/";
     file_name_stream << init_rot[0]/M_PI*180.0 << ',' << init_rot[1]/M_PI*180.0 << ',' << init_rot[2]/M_PI*180.0 << ',' << matches.size() << ".png" << endl;
     file_name_stream >> file_name;
     cv::imwrite(file_name, outImage);
+
+    ofstream log_file;
+    log_file.open("log.txt", std::ios_base::app);
+    log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
+             << init_rot[0]/M_PI*180.0 << ',' << init_rot[1]/M_PI*180.0 << ',' << init_rot[2]/M_PI*180.0 << ',' 
+             << matches.size() << endl; 
 }
