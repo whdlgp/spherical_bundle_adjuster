@@ -47,7 +47,7 @@ vector<DMatch> spherical_bundle_adjuster::match_two_image(const Mat &descriptor1
     vector<vector<DMatch>> knn_matches;
     matcher->knnMatch(descriptor1, descriptor2, knn_matches, 2);
 
-    const float ratio_thresh = 0.1f;
+    const float ratio_thresh = 0.3f;
     std::vector<DMatch> good_matches;
 
     for (size_t i = 0; i < knn_matches.size(); i++)
@@ -282,10 +282,13 @@ void spherical_bundle_adjuster::do_all(const Mat& im_left, const Mat& im_right)
     options.linear_solver_type = ceres::ITERATIVE_SCHUR;
     options.max_num_iterations = 50;
     options.minimizer_progress_to_stdout = true;
+    options.num_threads = 8;
     Solver::Summary summary;
     Solve(options, &problem, &summary);
 
     std::cout << summary.BriefReport() << "\n";
+    std::cout << "Given thread: " << summary.num_threads_given << std::endl;
+    std::cout << "Used thread: " << summary.num_threads_used << std::endl;
 
     std::cout << "expected rotation vector " << expected_roll << ' ' << expected_pitch << ' ' << expected_yaw << ' ' << std::endl;
     std::cout << "rotation vector in degree " << init_rot[0]/M_PI*180.0 << ' ' << init_rot[1]/M_PI*180.0 << ' ' << init_rot[2]/M_PI*180.0<< std::endl;
