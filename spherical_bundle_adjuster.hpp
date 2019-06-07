@@ -1,57 +1,82 @@
-#pragma once
-#include "opencv2/opencv_modules.hpp"
-
-#define _USE_MATH_DEFINES
-#include <vector>
-#include <algorithm>
-#include <utility>
-#include <set>
-#include <functional>
-#include <sstream>
-#include <iostream>
-#include <cmath>
-#include <iostream>
-
-#include "opencv2/core/ocl.hpp"
-#include "opencv2/imgproc.hpp"
-#include "opencv2/imgcodecs.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/calib3d.hpp"
-#include "opencv2/features2d.hpp"
-#include "opencv2/xfeatures2d.hpp"
+#include "feature_matcher.hpp"
 
 #include "ceres/ceres.h"
 #include "ceres/rotation.h"
 
 #include "debug_print.h"
 
+#include <sstream>
+#include <fstream>
+
 class spherical_bundle_adjuster
 {
     public:
-    void init();
-    void deinit();
     spherical_bundle_adjuster(double roll = 0, double pitch = 0, double yaw = 0)
-    : expected_roll(roll), expected_pitch(pitch), expected_yaw(yaw) { init(); } 
-    ~spherical_bundle_adjuster() { deinit(); }
-
-    std::vector<cv::KeyPoint> detect_key_point(const cv::Mat &image);
-    cv::Mat comput_descriptor(const cv::Mat &image, std::vector<cv::KeyPoint> &key_point);
-    std::vector<cv::DMatch> match_two_image(const cv::Mat &descriptor1, const cv::Mat &descriptor2);
-
-    void do_all(const cv::Mat &im_left, const cv::Mat &im_right);
-
-    private:
-    cv::Ptr<cv::Feature2D> detector;
-    cv::Ptr<cv::Feature2D> descriptor_extractor;
-    cv::Ptr<cv::DescriptorMatcher> matcher;
+    : expected_roll(roll), expected_pitch(pitch), expected_yaw(yaw) {} 
+    ~spherical_bundle_adjuster() {}
     
-    std::vector<cv::KeyPoint> key_point_left;
-    std::vector<cv::KeyPoint> key_point_right;
-    cv::Mat descriptor_left;
-    cv::Mat descriptor_right;
-    std::vector<cv::DMatch> matches;
-
+    void do_bundle_adjustment(const cv::Mat &im_left, const cv::Mat &im_right);
+    
+    private:
     double expected_roll;
     double expected_pitch;
     double expected_yaw;
+};
+
+// spherical bundle adjustment
+struct ba_spherical_costfunctor
+{
+    ba_spherical_costfunctor(double cam1_x, double cam1_y, double cam1_z, double cam2_x, double cam2_y, double cam2_z)
+    : cam1_x_(cam1_x), cam1_y_(cam1_y), cam1_z_(cam1_z), cam2_x_(cam2_x), cam2_y_(cam2_y), cam2_z_(cam2_z)
+    {}
+
+    // reprojection error
+    template <typename T> bool operator()(const T *const d, const T *const r, const T *const t, T *residual) const;
+
+    static void add_residual(ceres::Problem& problem
+                           , std::vector<cv::Point3d>& key_point_left_rect
+                           , std::vector<cv::Point3d>& key_point_right_rect
+                           , double* init_rot
+                           , double* init_tran
+                           , std::vector<std::array<double, 2>>& init_d
+                           , int match_num);
+
+    private:
+    const double cam1_x_;
+    const double cam1_y_;
+    const double cam1_z_;
+    const double cam2_x_;
+    const double cam2_y_;
+    const double cam2_z_;
+};
+
+struct ba_spherical_costfunctor_rot_only
+{
+    ba_spherical_costfunctor_rot_only(double cam1_x, double cam1_y, double cam1_z, double cam2_x, double cam2_y, double cam2_z, double t_1, double t_2, double t_3, double d_1, double d_2)
+    : cam1_x_(cam1_x), cam1_y_(cam1_y), cam1_z_(cam1_z), cam2_x_(cam2_x), cam2_y_(cam2_y), cam2_z_(cam2_z), t_1_(t_1), t_2_(t_2), t_3_(t_3), d_1_(d_1), d_2_(d_2)
+    {}
+
+    // reprojection error
+    template <typename T> bool operator()(const T *const r, T *residual) const;
+
+    static void add_residual(ceres::Problem& problem
+                           , std::vector<cv::Point3d>& key_point_left_rect
+                           , std::vector<cv::Point3d>& key_point_right_rect
+                           , double* init_rot
+                           , double* init_tran
+                           , std::vector<std::array<double, 2>>& init_d
+                           , int match_num);
+
+    private:
+    const double cam1_x_;
+    const double cam1_y_;
+    const double cam1_z_;
+    const double cam2_x_;
+    const double cam2_y_;
+    const double cam2_z_;
+    const double t_1_;
+    const double t_2_;
+    const double t_3_;
+    const double d_1_;
+    const double d_2_;
 };
