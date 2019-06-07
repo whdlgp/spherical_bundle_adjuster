@@ -32,6 +32,7 @@ class feature_matcher
     std::vector<cv::KeyPoint> detect_key_point(const cv::Mat &image);
     cv::Mat comput_descriptor(const cv::Mat &image, std::vector<cv::KeyPoint> &key_point);
     std::vector<cv::DMatch> match_two_image(const cv::Mat &descriptor1, const cv::Mat &descriptor2);
+    cv::Mat draw_match(const cv::Mat& im_left, const cv::Mat& im_right, const std::vector<cv::KeyPoint>& key_left, const std::vector<cv::KeyPoint>& key_right);
 
     void do_all(const cv::Mat &im_left, const cv::Mat &im_right, std::vector<cv::KeyPoint>& left_key, std::vector<cv::KeyPoint>& right_key, int& match_size, cv::Mat& match_output);
 

@@ -58,6 +58,26 @@ vector<DMatch> feature_matcher::match_two_image(const Mat &descriptor1, const Ma
     return good_matches;
 }
 
+Mat feature_matcher::draw_match(const Mat& im_left, const Mat& im_right, const vector<KeyPoint>& key_left, const vector<KeyPoint>& key_right)
+{
+    Mat im_overlap;
+    addWeighted(im_left, 0.5, im_right, 0.5, 0.0, im_overlap);
+
+    int match_size = key_left.size();
+    for(int i = 0; i < match_size; i++)
+    {
+        Mat rgb;
+        Mat hsv(1,1, CV_8UC3, Scalar(i*(180.0/match_size), 180, 150));
+        cvtColor(hsv, rgb, CV_HSV2BGR);
+        DEBUG_PRINT_OUT("test rgb" << rgb);
+        Scalar val = Scalar(rgb.data[0], rgb.data[1], rgb.data[2]);
+
+        line(im_overlap, key_left[i].pt, key_right[i].pt, val, 5);
+    }
+
+    return im_overlap;
+}
+
 void feature_matcher::do_all(const Mat& im_left, const Mat& im_right, vector<KeyPoint>& left_key, vector<KeyPoint>& right_key, int& match_size, Mat& match_output)
 {
     //Finding features, making descriptor
@@ -91,8 +111,7 @@ void feature_matcher::do_all(const Mat& im_left, const Mat& im_right, vector<Key
         tmp_match[i].trainIdx = i;
         tmp_match[i].distance = matches[i].distance;
     }
-    Mat outImage;
-    cv::drawMatches(im_left, valid_key_left, im_right, valid_key_right, tmp_match, outImage);
+    Mat outImage = draw_match(im_left, im_right, valid_key_left, valid_key_right);
 
     left_key = valid_key_left;
     right_key = valid_key_right;
