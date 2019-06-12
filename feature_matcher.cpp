@@ -69,7 +69,6 @@ Mat feature_matcher::draw_match(const Mat& im_left, const Mat& im_right, const v
         Mat rgb;
         Mat hsv(1,1, CV_8UC3, Scalar(i*(180.0/match_size), 180, 150));
         cvtColor(hsv, rgb, CV_HSV2BGR);
-        DEBUG_PRINT_OUT("test rgb" << rgb);
         Scalar val = Scalar(rgb.data[0], rgb.data[1], rgb.data[2]);
 
         line(im_overlap, key_left[i].pt, key_right[i].pt, val, 5);

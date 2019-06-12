@@ -18,7 +18,7 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
     int match_size;
     Mat match_output;
 
-    feature_matcher fm;
+    spherical_surf fm;
     fm.do_all(im_left, im_right, left_key, right_key, match_size, match_output);
 
     // convert pixel to radian coordinate, in unit sphere
