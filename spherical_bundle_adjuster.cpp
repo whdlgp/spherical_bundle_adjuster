@@ -60,6 +60,7 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
     // Bundle adjustment
     Problem problem_rot;
     Problem problem_tran;
+    Problem problem_d;
 
     // initial value
     vector<array<double, 2>> init_d(match_size);
@@ -74,7 +75,8 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
     // Add residual with initial value
     ba_spherical_costfunctor_rot_only::add_residual(problem_rot, key_point_left_rect, key_point_right_rect, init_rot, init_tran, init_d, match_size);
     ba_spherical_costfunctor_tran_only::add_residual(problem_tran, key_point_left_rect, key_point_right_rect, init_rot, init_tran, init_d, match_size);
-
+    ba_spherical_costfunctor_d_only::add_residual(problem_d, key_point_left_rect, key_point_right_rect, init_rot, init_tran, init_d, match_size);
+    
     // Set options and solve problem
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::ITERATIVE_SCHUR;
@@ -90,7 +92,10 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
     std::cout << summary.BriefReport() << "\n";
     std::cout << "Given thread: " << summary.num_threads_given << std::endl;
     std::cout << "Used thread: " << summary.num_threads_used << std::endl;
-
+    Solve(options, &problem_tran, &summary);
+    std::cout << summary.BriefReport() << "\n";
+    std::cout << "Given thread: " << summary.num_threads_given << std::endl;
+    std::cout << "Used thread: " << summary.num_threads_used << std::endl;
 
     std::cout << "expected rotation vector " << expected_roll << ' ' << expected_pitch << ' ' << expected_yaw << ' ' << std::endl;
     std::cout << "rotation vector in degree " << init_rot[0]/M_PI*180.0 << ' ' << init_rot[1]/M_PI*180.0 << ' ' << init_rot[2]/M_PI*180.0<< std::endl;
@@ -277,5 +282,60 @@ void ba_spherical_costfunctor_tran_only::add_residual(Problem& problem
                                                                 , init_d[0][0]
                                                                 , init_d[1][0]));
         problem.AddResidualBlock(cost_functor, new ceres::HuberLoss(1.0), init_tran);
+    }
+}
+
+// reprojection error
+template <typename T> bool ba_spherical_costfunctor_d_only::operator()(const T *const d, T *residual) const
+{
+    // unit sphere projected point
+    T X1[3], X2[3];
+    X1[0] = cam1_x_*d[0];
+    X1[1] = cam1_y_*d[0];
+    X1[2] = cam1_z_*d[0];
+    X2[0] = cam2_x_*d[1];
+    X2[1] = cam2_y_*d[1];
+    X2[2] = cam2_z_*d[1];
+
+    // rotation and translationR(Xn - t)
+    T X1_translate[3], X1_RT[3];
+    X1_translate[0] = X1[0] - t_1_;
+    X1_translate[1] = X1[1] - t_2_;
+    X1_translate[2] = X1[2] - t_3_;
+
+    T r_vec[3] = {static_cast<T>(r_1_), static_cast<T>(r_2_), static_cast<T>(r_3_)};
+    ceres::AngleAxisRotatePoint(r_vec, X1_translate, X1_RT);
+
+    residual[0] = (X2[0] - X1_RT[0])*(X2[0] - X1_RT[0]);
+    residual[1] = (X2[1] - X1_RT[1])*(X2[1] - X1_RT[1]);
+    residual[2] = (X2[2] - X1_RT[2])*(X2[2] - X1_RT[2]);
+
+    return true;
+}
+
+void ba_spherical_costfunctor_d_only::add_residual(Problem& problem
+                         , vector<Point3d>& key_point_left_rect
+                         , vector<Point3d>& key_point_right_rect
+                         , double* init_rot
+                         , double* init_tran
+                         , vector<array<double, 2>>& init_d
+                         , int match_num)
+{
+    for(int i = 0; i < match_num; i++)
+    {
+        CostFunction *cost_functor = new ceres::AutoDiffCostFunction<ba_spherical_costfunctor_d_only, 3, 2>
+                                    (new ba_spherical_costfunctor_d_only(key_point_left_rect[i].x
+                                                                , key_point_left_rect[i].y
+                                                                , key_point_left_rect[i].z
+                                                                , key_point_right_rect[i].x
+                                                                , key_point_right_rect[i].y
+                                                                , key_point_right_rect[i].z
+                                                                , init_tran[0]
+                                                                , init_tran[1]
+                                                                , init_tran[2]
+                                                                , init_rot[0]
+                                                                , init_rot[1]
+                                                                , init_rot[2]));
+        problem.AddResidualBlock(cost_functor, new ceres::HuberLoss(1.0), init_d[i].data());
     }
 }

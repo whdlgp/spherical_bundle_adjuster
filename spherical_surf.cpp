@@ -178,7 +178,6 @@ void spherical_surf::do_all(const Mat& im_left, const Mat& im_right, vector<KeyP
     Mat desc_right_n1 = fm.comput_descriptor(right_n1, key_right_n1);
     Mat desc_right_n2 = fm.comput_descriptor(right_n2, key_right_n2);
     Mat desc_right_n3 = fm.comput_descriptor(right_n3, key_right_n3);
-    DEBUG_PRINT_OUT("descriptor size " << desc_left_n0.rows << ", " << desc_left_n0.cols);
 
     DEBUG_PRINT_OUT("Rotate found key point");
     rotate_keypoint(45, key_left_n0, im_width, im_height);
