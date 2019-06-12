@@ -18,8 +18,9 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
     int match_size;
     Mat match_output;
 
+    DEBUG_PRINT_OUT("Do feature finding and matching");
     spherical_surf fm;
-    fm.set_omp(omp_get_num_procs());
+    fm.set_omp(this->num_proc);
     fm.do_all(im_left, im_right, left_key, right_key, match_size, match_output);
 
     // convert pixel to radian coordinate, in unit sphere
@@ -29,6 +30,8 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
     double im_height = im_left.rows;
     vector<Point2d> key_point_left_radian(match_size);
     vector<Point2d> key_point_right_radian(match_size);
+
+    #pragma omp parallel for
     for(int i = 0; i < match_size; i++)
     {
         key_point_left_radian[i].x = 2*M_PI*(left_key[i].pt.x / im_width);
@@ -40,6 +43,7 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
     // convert radian to rectangular coordinate
     vector<Point3d> key_point_left_rect(match_size);
     vector<Point3d> key_point_right_rect(match_size);
+    #pragma omp parallel for
     for(int i = 0; i < match_size; i++)
     {
         key_point_left_rect[i].x = sin(key_point_left_radian[i].y)*cos(key_point_left_radian[i].x);
@@ -51,6 +55,8 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
         key_point_right_rect[i].z = cos(key_point_right_radian[i].y);
     }
 
+    DEBUG_PRINT_OUT("Do bundle adjustment");
+    
     // Bundle adjustment
     Problem problem;
 
@@ -99,6 +105,14 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
     cv::imwrite(file_name, match_output);
     
     DEBUG_PRINT_OUT("Done."); 
+}
+
+void spherical_bundle_adjuster::set_omp(int num_proc)
+{
+    this->num_proc = num_proc;
+
+    omp_set_num_threads(this->num_proc);
+    DEBUG_PRINT_OUT("Number of process: " << this->num_proc);
 }
 
 // reprojection error

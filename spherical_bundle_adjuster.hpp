@@ -1,3 +1,5 @@
+#pragma once
+
 #include "spherical_surf.hpp"
 
 #include "ceres/ceres.h"
@@ -8,6 +10,8 @@
 #include <sstream>
 #include <fstream>
 
+#include <omp.h>
+
 class spherical_bundle_adjuster
 {
     public:
@@ -15,12 +19,15 @@ class spherical_bundle_adjuster
     : expected_roll(roll), expected_pitch(pitch), expected_yaw(yaw) {} 
     ~spherical_bundle_adjuster() {}
     
+    void set_omp(int num_proc);
     void do_bundle_adjustment(const cv::Mat &im_left, const cv::Mat &im_right);
     
     private:
     double expected_roll;
     double expected_pitch;
     double expected_yaw;
+
+    int num_proc;
 };
 
 // spherical bundle adjustment

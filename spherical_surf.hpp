@@ -1,3 +1,5 @@
+#pragma once
+
 #include "feature_matcher.hpp"
 #include <omp.h>
 

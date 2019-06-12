@@ -23,6 +23,7 @@ int main(int argc, char** argv)
     expected_yaw = atof(argv[5]);
 
     spherical_bundle_adjuster sph_ba(expected_roll, expected_pitch, expected_yaw);
+    sph_ba.set_omp(omp_get_num_procs());
     sph_ba.do_bundle_adjustment(im_left, im_right);
     return 0;
 }
