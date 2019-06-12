@@ -5,6 +5,14 @@
 using namespace std;
 using namespace cv;
 
+void spherical_surf::set_omp(int num_proc)
+{
+    this->num_proc = num_proc;
+
+    omp_set_num_threads(this->num_proc);
+    DEBUG_PRINT_OUT("Number of process: " << this->num_proc);
+}
+
 // From OpenCV example utils.hpp code
 // Calculates rotation matrix given euler angles.
 Mat spherical_surf::eular2rot(Vec3f theta)
@@ -74,6 +82,8 @@ Mat spherical_surf::crop_rotated_image(float pitch_rot, const Mat& im)
     Mat out(im_height/4, im_width, im.type());
 
     Mat2i im_pixel_rotate(im_height/4, im_width);
+    
+    #pragma omp parallel for
     for(int i = 0; i < im_height/4; i++)
     {
         for(int j = 0; j < im_width; j++)
@@ -100,6 +110,7 @@ Mat spherical_surf::crop_rotated_image(float pitch_rot, const Mat& im)
 
 void spherical_surf::rotate_keypoint(float pitch_rot_inv, vector<KeyPoint>& key, int width, int height)
 {
+    #pragma omp parallel for
     for(int i = 0; i < key.size(); i++)
     {
         int offset_i = key[i].pt.y+height*3/8;
@@ -171,12 +182,14 @@ void spherical_surf::do_all(const Mat& im_left, const Mat& im_right, vector<KeyP
 
     DEBUG_PRINT_OUT("Rotate found key point");
     rotate_keypoint(45, key_left_n0, im_width, im_height);
+    #pragma omp parallel for
     for(int i = 0; i < key_left_n1.size(); i++)
         key_left_n1[i].pt.y = key_left_n1[i].pt.y + im_height*3/8;
     rotate_keypoint(-45, key_left_n2, im_width, im_height);
     rotate_keypoint(-90, key_left_n3, im_width, im_height);
 
     rotate_keypoint(45, key_right_n0, im_width, im_height);
+    #pragma omp parallel for
     for(int i = 0; i < key_right_n1.size(); i++)
         key_right_n1[i].pt.y = key_right_n1[i].pt.y + im_height*3/8;
     rotate_keypoint(-45, key_right_n2, im_width, im_height);
@@ -204,6 +217,7 @@ void spherical_surf::do_all(const Mat& im_left, const Mat& im_right, vector<KeyP
 
     vector<KeyPoint> valid_key_left(matches.size());
     vector<KeyPoint> valid_key_right(matches.size());
+    #pragma omp parallel for
     for(int i = 0; i < matches.size(); i++)
     {
         valid_key_left[i] = left_key_tmp[matches[i].queryIdx];
@@ -212,6 +226,7 @@ void spherical_surf::do_all(const Mat& im_left, const Mat& im_right, vector<KeyP
     
     // For test imshow
     vector<DMatch> tmp_match(matches.size());
+    #pragma omp parallel for
     for(int i = 0; i < matches.size(); i++)
     {
         tmp_match[i].queryIdx = i;

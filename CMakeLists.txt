@@ -6,9 +6,9 @@ aux_source_directory( "." SRCS)
 
 set( ld_flag /home/choyg/workspace/opencv_ffmpeg/opencv-3.4.2/install/lib )
 set( include_flag /home/choyg/workspace/opencv_ffmpeg/opencv-3.4.2/install/include )
-set( libs opencv_img_hash opencv_world )
+set( libs opencv_img_hash opencv_world OpenMP::OpenMP_CXX )
 
-find_package(Threads)
+find_package(OpenMP REQUIRED)
 find_package(Ceres REQUIRED)
 
 include_directories( ${include_flag} ${CERES_INCLUDE_DIRS} )
