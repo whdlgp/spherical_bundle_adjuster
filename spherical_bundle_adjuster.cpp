@@ -71,28 +71,29 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
     }
     double init_rot[3] = {expected_roll/180*M_PI, expected_pitch/180*M_PI, expected_yaw/180*M_PI};
     double init_tran[3] = {0.0, 0.0, 0.0};
-
-    // Add residual with initial value
-    ba_spherical_costfunctor_rot_only::add_residual(problem_rot, key_point_left_rect, key_point_right_rect, init_rot, init_tran, init_d, match_size);
-    ba_spherical_costfunctor_tran_only::add_residual(problem_tran, key_point_left_rect, key_point_right_rect, init_rot, init_tran, init_d, match_size);
-    ba_spherical_costfunctor_d_only::add_residual(problem_d, key_point_left_rect, key_point_right_rect, init_rot, init_tran, init_d, match_size);
     
     // Set options and solve problem
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::ITERATIVE_SCHUR;
     options.max_num_iterations = 50;
     options.minimizer_progress_to_stdout = true;
-    options.num_threads = 8;
+    options.num_threads = this->num_proc;
     Solver::Summary summary;
+
+    ba_spherical_costfunctor_rot_only::add_residual(problem_rot, key_point_left_rect, key_point_right_rect, init_rot, init_tran, init_d, match_size);
     Solve(options, &problem_rot, &summary);
     std::cout << summary.BriefReport() << "\n";
     std::cout << "Given thread: " << summary.num_threads_given << std::endl;
     std::cout << "Used thread: " << summary.num_threads_used << std::endl;
+
+    ba_spherical_costfunctor_tran_only::add_residual(problem_tran, key_point_left_rect, key_point_right_rect, init_rot, init_tran, init_d, match_size);
     Solve(options, &problem_tran, &summary);
     std::cout << summary.BriefReport() << "\n";
     std::cout << "Given thread: " << summary.num_threads_given << std::endl;
     std::cout << "Used thread: " << summary.num_threads_used << std::endl;
-    Solve(options, &problem_tran, &summary);
+
+    ba_spherical_costfunctor_d_only::add_residual(problem_d, key_point_left_rect, key_point_right_rect, init_rot, init_tran, init_d, match_size);
+    Solve(options, &problem_d, &summary);
     std::cout << summary.BriefReport() << "\n";
     std::cout << "Given thread: " << summary.num_threads_given << std::endl;
     std::cout << "Used thread: " << summary.num_threads_used << std::endl;
@@ -106,6 +107,11 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
     log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
              << init_rot[0]/M_PI*180.0 << ',' << init_rot[1]/M_PI*180.0 << ',' << init_rot[2]/M_PI*180.0 << ',' 
              << match_size << endl; 
+
+    ofstream log_d_file;
+    log_d_file.open("log_d.txt", std::ios_base::app);
+    for(int i = 0; i < match_size; i++)
+        log_d_file << init_d[i][0] << ',' << init_d[i][1] << endl;
     
     // Save test match image and log file
     string file_name;
