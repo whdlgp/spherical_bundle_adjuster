@@ -96,3 +96,4 @@ _deps
 #log file
 log*
 test*
+*.sh

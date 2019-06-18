@@ -23,6 +23,17 @@ class spherical_bundle_adjuster
     void do_bundle_adjustment(const cv::Mat &im_left, const cv::Mat &im_right);
     
     private:
+    void solve_problem(ceres::Solver::Options& opt
+                    , std::vector<cv::Point3d>& key_point_left_rect
+                    , std::vector<cv::Point3d>& key_point_right_rect
+                    , double* init_rot
+                    , double* init_tran
+                    , std::vector<std::array<double, 2>>& init_d
+                    , int match_num);
+    
+    void write_log_d(std::vector<std::array<double, 2UL>>& init_d, cv::String name);
+    void write_d_circle(const cv::Mat& im_left, std::vector<std::array<double, 2UL>>& init_d, std::vector<cv::KeyPoint> left_key, cv::String name);
+
     double expected_roll;
     double expected_pitch;
     double expected_yaw;

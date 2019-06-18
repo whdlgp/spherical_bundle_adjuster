@@ -1,4 +1,4 @@
-#include "spherical_bundle_adjuster.hpp"
+#include "../spherical_bundle_adjuster.hpp"
 
 using namespace std;
 using namespace cv;
