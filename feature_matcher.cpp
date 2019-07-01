@@ -60,8 +60,16 @@ vector<DMatch> feature_matcher::match_two_image(const Mat &descriptor1, const Ma
 
 Mat feature_matcher::draw_match(const Mat& im_left, const Mat& im_right, const vector<KeyPoint>& key_left, const vector<KeyPoint>& key_right)
 {
-    Mat im_overlap;
-    addWeighted(im_left, 0.5, im_right, 0.5, 0.0, im_overlap);
+    Mat im_left_gray, im_right_gray;
+    cvtColor(im_left, im_left_gray, CV_RGB2GRAY);
+    cvtColor(im_right, im_right_gray, CV_RGB2GRAY);
+
+    Mat im_overlap(im_left.rows, im_left.cols, im_left.type());
+    Mat chan[3];
+    chan[0] = im_left_gray;
+    chan[1] = im_right_gray;
+    chan[2] = Mat::zeros(im_left.rows, im_left.cols, CV_8UC1);
+    merge(chan, 3, im_overlap);
 
     int match_size = key_left.size();
     for(int i = 0; i < match_size; i++)
@@ -77,7 +85,7 @@ Mat feature_matcher::draw_match(const Mat& im_left, const Mat& im_right, const v
     return im_overlap;
 }
 
-void feature_matcher::do_all(const Mat& im_left, const Mat& im_right, vector<KeyPoint>& left_key, vector<KeyPoint>& right_key, int& match_size, Mat& match_output)
+void feature_matcher::do_all(const Mat& im_left, const Mat& im_right, vector<KeyPoint>& left_key, vector<KeyPoint>& right_key, int& match_size, Mat& match_output, int& total_key_num)
 {
     //Finding features, making descriptor
     START_TIME(Feature_finding_make_descriptor);
@@ -116,4 +124,5 @@ void feature_matcher::do_all(const Mat& im_left, const Mat& im_right, vector<Key
     right_key = valid_key_right;
     match_size = matches.size();
     match_output = outImage;
+    total_key_num = key_point_left.size();
 }

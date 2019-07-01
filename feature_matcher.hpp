@@ -34,7 +34,7 @@ class feature_matcher
     std::vector<cv::DMatch> match_two_image(const cv::Mat &descriptor1, const cv::Mat &descriptor2);
     cv::Mat draw_match(const cv::Mat& im_left, const cv::Mat& im_right, const std::vector<cv::KeyPoint>& key_left, const std::vector<cv::KeyPoint>& key_right);
 
-    void do_all(const cv::Mat &im_left, const cv::Mat &im_right, std::vector<cv::KeyPoint>& left_key, std::vector<cv::KeyPoint>& right_key, int& match_size, cv::Mat& match_output);
+    void do_all(const cv::Mat &im_left, const cv::Mat &im_right, std::vector<cv::KeyPoint>& left_key, std::vector<cv::KeyPoint>& right_key, int& match_size, cv::Mat& match_output, int& total_key_num);
 
     private:
     cv::Ptr<cv::Feature2D> detector;

@@ -124,7 +124,7 @@ void spherical_surf::rotate_keypoint(float pitch_rot_inv, vector<KeyPoint>& key,
     }
 }
 
-void spherical_surf::do_all(const Mat& im_left, const Mat& im_right, vector<KeyPoint>& left_key, vector<KeyPoint>& right_key, int& match_size, Mat& match_output)
+void spherical_surf::do_all(const Mat& im_left, const Mat& im_right, vector<KeyPoint>& left_key, vector<KeyPoint>& right_key, int& match_size, Mat& match_output, int& total_key_num)
 {
     int im_width = im_left.cols;
     int im_height = im_left.rows;
@@ -238,4 +238,5 @@ void spherical_surf::do_all(const Mat& im_left, const Mat& im_right, vector<KeyP
     right_key = valid_key_right;
     match_size = matches.size();
     match_output = outImage;
+    total_key_num = key_left_n0.size()+key_left_n1.size()+key_left_n2.size()+key_left_n3.size();
 }

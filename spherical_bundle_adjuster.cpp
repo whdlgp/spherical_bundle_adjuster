@@ -89,11 +89,12 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
     vector<KeyPoint> right_key;
     int match_size;
     Mat match_output;
+    int total_key_num;
 
     DEBUG_PRINT_OUT("Do feature finding and matching");
     spherical_surf fm;
     fm.set_omp(this->num_proc);
-    fm.do_all(im_left, im_right, left_key, right_key, match_size, match_output);
+    fm.do_all(im_left, im_right, left_key, right_key, match_size, match_output, total_key_num);
 
     // convert pixel to radian coordinate, in unit sphere
     // x : longitude
@@ -158,7 +159,9 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
     log_file.open("log.txt", std::ios_base::app);
     log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
              << init_rot[0]/M_PI*180.0 << ',' << init_rot[1]/M_PI*180.0 << ',' << init_rot[2]/M_PI*180.0 << ',' 
+             << init_tran[0] << ',' << init_tran[0] << ',' << init_tran[0] << ','
              << match_size << endl; 
+    log_file.close();
 
     write_d_circle(im_left, init_d, left_key, "d_found");
     write_log_d(init_d, "log_d");
@@ -193,6 +196,14 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
                     , init_tran2
                     , init_d2
                     , match_size2);
+                    
+        ofstream log_file;
+        log_file.open("log.txt", std::ios_base::app);
+        log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
+                << init_rot2[0]/M_PI*180.0 << ',' << init_rot2[1]/M_PI*180.0 << ',' << init_rot2[2]/M_PI*180.0 << ',' 
+                << init_tran2[0] << ',' << init_tran2[0] << ',' << init_tran2[0] << ','
+                << match_size << endl; 
+        log_file.close();
         
         write_d_circle(im_left, init_d2, left_key2, "d_found2");
         write_log_d(init_d2, "log_d2");
@@ -227,6 +238,14 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
                     , init_tran3
                     , init_d3
                     , match_size3);
+
+        ofstream log_file;
+        log_file.open("log.txt", std::ios_base::app);
+        log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
+                << init_rot3[0]/M_PI*180.0 << ',' << init_rot3[1]/M_PI*180.0 << ',' << init_rot3[2]/M_PI*180.0 << ',' 
+                << init_tran3[0] << ',' << init_tran3[0] << ',' << init_tran3[0] << ','
+                << match_size << endl; 
+        log_file.close();
 
         write_d_circle(im_left, init_d3, left_key3, "d_found3");
         write_log_d(init_d3, "log_d3");
@@ -264,6 +283,14 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
                         , init_d4
                         , match_size4);
         }
+
+        ofstream log_file;
+        log_file.open("log.txt", std::ios_base::app);
+        log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
+                << init_rot4[0]/M_PI*180.0 << ',' << init_rot4[1]/M_PI*180.0 << ',' << init_rot4[2]/M_PI*180.0 << ',' 
+                << init_tran4[0] << ',' << init_tran4[0] << ',' << init_tran4[0] << ','
+                << match_size << endl; 
+        log_file.close();
 
         write_d_circle(im_left, init_d4, left_key4, "d_found4");
         write_log_d(init_d4, "log_d4");
@@ -314,6 +341,14 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
                         , init_d5
                         , match_size5);
         }
+
+        ofstream log_file;
+        log_file.open("log.txt", std::ios_base::app);
+        log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
+                << init_rot5[0]/M_PI*180.0 << ',' << init_rot5[1]/M_PI*180.0 << ',' << init_rot5[2]/M_PI*180.0 << ',' 
+                << init_tran5[0] << ',' << init_tran5[0] << ',' << init_tran5[0] << ','
+                << match_size << endl; 
+        log_file.close();
 
         write_d_circle(im_left, init_d5, left_key5, "d_found5");
         write_log_d(init_d5, "log_d5");
@@ -394,6 +429,14 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
                         , match_size6);
         }
 
+        ofstream log_file;
+        log_file.open("log.txt", std::ios_base::app);
+        log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
+                << init_rot6[0]/M_PI*180.0 << ',' << init_rot6[1]/M_PI*180.0 << ',' << init_rot6[2]/M_PI*180.0 << ',' 
+                << init_tran6[0] << ',' << init_tran6[0] << ',' << init_tran6[0] << ','
+                << match_size << endl; 
+        log_file.close();
+
         write_d_circle(im_left, init_d6, left_key6, "d_found6");
         write_log_d(init_d6, "log_d6");
     }
@@ -473,6 +516,14 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
                         , init_d7
                         , match_size7);
         }
+
+        ofstream log_file;
+        log_file.open("log.txt", std::ios_base::app);
+        log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
+                << init_rot7[0]/M_PI*180.0 << ',' << init_rot7[1]/M_PI*180.0 << ',' << init_rot7[2]/M_PI*180.0 << ',' 
+                << init_tran7[0] << ',' << init_tran7[0] << ',' << init_tran7[0] << ','
+                << match_size << endl; 
+        log_file.close();
 
         write_d_circle(im_left, init_d7, left_key7, "d_found7");
         write_log_d(init_d7, "log_d7");
@@ -566,6 +617,14 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
                         , init_d8
                         , match_size8);
         }
+
+        ofstream log_file;
+        log_file.open("log.txt", std::ios_base::app);
+        log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
+                << init_rot8[0]/M_PI*180.0 << ',' << init_rot8[1]/M_PI*180.0 << ',' << init_rot8[2]/M_PI*180.0 << ',' 
+                << init_tran8[0] << ',' << init_tran8[0] << ',' << init_tran8[0] << ','
+                << match_size << endl; 
+        log_file.close();
 
         write_d_circle(im_left, init_d8, left_key8, "d_found8");
         write_log_d(init_d8, "log_d8");
