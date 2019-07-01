@@ -662,12 +662,13 @@ template <typename T> bool ba_spherical_costfunctor::operator()(const T *const d
     X2[1] = cam2_y_*d[1];
     X2[2] = cam2_z_*d[1];
 
-    // rotation and translationR(Xn - t)
-    T X1_translate[3], X1_RT[3];
-    X1_translate[0] = X1[0] - t[0];
-    X1_translate[1] = X1[1] - t[1];
-    X1_translate[2] = X1[2] - t[2];
-    ceres::AngleAxisRotatePoint(r, X1_translate, X1_RT);
+    // rotation and translation (R*Xn - t)
+    T X1_rotated[3], X1_RT[3];
+    ceres::AngleAxisRotatePoint(r, X1, X1_rotated);
+
+    X1_RT[0] = X1_rotated[0] - t[0];
+    X1_RT[1] = X1_rotated[1] - t[1];
+    X1_RT[2] = X1_rotated[2] - t[2];
 
     residual[0] = (X2[0] - X1_RT[0])*(X2[0] - X1_RT[0]);
     residual[1] = (X2[1] - X1_RT[1])*(X2[1] - X1_RT[1]);
@@ -712,12 +713,13 @@ template <typename T> bool ba_spherical_costfunctor_rot_only::operator()(const T
     X2[1] = cam2_y_*d[1];
     X2[2] = cam2_z_*d[1];
 
-    // rotation and translationR(Xn - t)
-    T X1_translate[3], X1_RT[3];
-    X1_translate[0] = X1[0] - t_1_;
-    X1_translate[1] = X1[1] - t_2_;
-    X1_translate[2] = X1[2] - t_3_;
-    ceres::AngleAxisRotatePoint(r, X1_translate, X1_RT);
+    // rotation and translation (R*Xn - t)
+    T X1_rotated[3], X1_RT[3];
+    ceres::AngleAxisRotatePoint(r, X1, X1_rotated);
+
+    X1_RT[0] = X1_rotated[0] - t_1_;
+    X1_RT[1] = X1_rotated[1] - t_2_;
+    X1_RT[2] = X1_rotated[2] - t_3_;
 
     residual[0] = (X2[0] - X1_RT[0])*(X2[0] - X1_RT[0]);
     residual[1] = (X2[1] - X1_RT[1])*(X2[1] - X1_RT[1]);
@@ -767,14 +769,14 @@ template <typename T> bool ba_spherical_costfunctor_tran_only::operator()(const 
     X2[1] = cam2_y_*d[1];
     X2[2] = cam2_z_*d[1];
 
-    // rotation and translationR(Xn - t)
-    T X1_translate[3], X1_RT[3];
-    X1_translate[0] = X1[0] - t[0];
-    X1_translate[1] = X1[1] - t[1];
-    X1_translate[2] = X1[2] - t[2];
-
+    // rotation and translation (R*Xn - t)
+    T X1_rotated[3], X1_RT[3];
     T r_vec[3] = {static_cast<T>(r_1_), static_cast<T>(r_2_), static_cast<T>(r_3_)};
-    ceres::AngleAxisRotatePoint(r_vec, X1_translate, X1_RT);
+    ceres::AngleAxisRotatePoint(r_vec, X1, X1_rotated);
+
+    X1_RT[0] = X1_rotated[0] - t[0];
+    X1_RT[1] = X1_rotated[1] - t[1];
+    X1_RT[2] = X1_rotated[2] - t[2];
 
     residual[0] = (X2[0] - X1_RT[0])*(X2[0] - X1_RT[0]);
     residual[1] = (X2[1] - X1_RT[1])*(X2[1] - X1_RT[1]);
@@ -821,18 +823,20 @@ template <typename T> bool ba_spherical_costfunctor_d_only::operator()(const T *
     X2[1] = cam2_y_*d[1];
     X2[2] = cam2_z_*d[1];
 
-    // rotation and translationR(Xn - t)
-    T X1_translate[3], X1_RT[3];
-    X1_translate[0] = X1[0] - t_1_;
-    X1_translate[1] = X1[1] - t_2_;
-    X1_translate[2] = X1[2] - t_3_;
-
+    // rotation and translation (R*Xn - t)
+    T X1_rotated[3], X1_RT[3];
     T r_vec[3] = {static_cast<T>(r_1_), static_cast<T>(r_2_), static_cast<T>(r_3_)};
-    ceres::AngleAxisRotatePoint(r_vec, X1_translate, X1_RT);
+    ceres::AngleAxisRotatePoint(r_vec, X1, X1_rotated);
+
+    X1_RT[0] = X1_rotated[0] - t_1_;
+    X1_RT[1] = X1_rotated[1] - t_2_;
+    X1_RT[2] = X1_rotated[2] - t_3_;
 
     residual[0] = (X2[0] - X1_RT[0])*(X2[0] - X1_RT[0]);
     residual[1] = (X2[1] - X1_RT[1])*(X2[1] - X1_RT[1]);
     residual[2] = (X2[2] - X1_RT[2])*(X2[2] - X1_RT[2]);
+    //residual[3] = lambda_*exp(-c_/d[0]);
+    //residual[4] = lambda_*exp(-c_/d[1]);
 
     return true;
 }
@@ -847,7 +851,7 @@ void ba_spherical_costfunctor_d_only::add_residual(Problem& problem
 {
     for(int i = 0; i < match_num; i++)
     {
-        CostFunction *cost_functor = new ceres::AutoDiffCostFunction<ba_spherical_costfunctor_d_only, 3, 2>
+        CostFunction *cost_functor = new ceres::AutoDiffCostFunction<ba_spherical_costfunctor_d_only, 3, 2>//5, 2>
                                     (new ba_spherical_costfunctor_d_only(key_point_left_rect[i].x
                                                                 , key_point_left_rect[i].y
                                                                 , key_point_left_rect[i].z
@@ -859,8 +863,10 @@ void ba_spherical_costfunctor_d_only::add_residual(Problem& problem
                                                                 , init_tran[2]
                                                                 , init_rot[0]
                                                                 , init_rot[1]
-                                                                , init_rot[2]));
-        problem.AddResidualBlock(cost_functor, new ceres::HuberLoss(1.0), init_d[i].data());
+                                                                , init_rot[2]
+                                                                , 1.0
+                                                                , 1.0));
+        problem.AddResidualBlock(cost_functor, NULL, init_d[i].data());
         problem.SetParameterLowerBound(init_d[i].data(), 0, 0.0);
         problem.SetParameterLowerBound(init_d[i].data(), 1, 0.0);
     }

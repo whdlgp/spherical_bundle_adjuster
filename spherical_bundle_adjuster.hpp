@@ -132,8 +132,8 @@ struct ba_spherical_costfunctor_tran_only
 
 struct ba_spherical_costfunctor_d_only
 {
-    ba_spherical_costfunctor_d_only(double cam1_x, double cam1_y, double cam1_z, double cam2_x, double cam2_y, double cam2_z, double t_1, double t_2, double t_3, double r_1, double r_2, double r_3)
-    : cam1_x_(cam1_x), cam1_y_(cam1_y), cam1_z_(cam1_z), cam2_x_(cam2_x), cam2_y_(cam2_y), cam2_z_(cam2_z), t_1_(t_1), t_2_(t_2), t_3_(t_3), r_1_(r_1), r_2_(r_2), r_3_(r_3)
+    ba_spherical_costfunctor_d_only(double cam1_x, double cam1_y, double cam1_z, double cam2_x, double cam2_y, double cam2_z, double t_1, double t_2, double t_3, double r_1, double r_2, double r_3, double lambda, double c)
+    : cam1_x_(cam1_x), cam1_y_(cam1_y), cam1_z_(cam1_z), cam2_x_(cam2_x), cam2_y_(cam2_y), cam2_z_(cam2_z), t_1_(t_1), t_2_(t_2), t_3_(t_3), r_1_(r_1), r_2_(r_2), r_3_(r_3), lambda_(lambda), c_(c)
     {}
 
     // reprojection error
@@ -160,4 +160,6 @@ struct ba_spherical_costfunctor_d_only
     const double r_1_;
     const double r_2_;
     const double r_3_;
+    const double lambda_;
+    const double c_;
 };
