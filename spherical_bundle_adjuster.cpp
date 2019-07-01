@@ -835,8 +835,8 @@ template <typename T> bool ba_spherical_costfunctor_d_only::operator()(const T *
     residual[0] = (X2[0] - X1_RT[0])*(X2[0] - X1_RT[0]);
     residual[1] = (X2[1] - X1_RT[1])*(X2[1] - X1_RT[1]);
     residual[2] = (X2[2] - X1_RT[2])*(X2[2] - X1_RT[2]);
-    //residual[3] = lambda_*exp(-c_/d[0]);
-    //residual[4] = lambda_*exp(-c_/d[1]);
+    residual[3] = lambda_*exp(-c_*d[0]);
+    residual[4] = lambda_*exp(-c_*d[1]);
 
     return true;
 }
@@ -851,7 +851,7 @@ void ba_spherical_costfunctor_d_only::add_residual(Problem& problem
 {
     for(int i = 0; i < match_num; i++)
     {
-        CostFunction *cost_functor = new ceres::AutoDiffCostFunction<ba_spherical_costfunctor_d_only, 3, 2>//5, 2>
+        CostFunction *cost_functor = new ceres::AutoDiffCostFunction<ba_spherical_costfunctor_d_only, 5, 2>
                                     (new ba_spherical_costfunctor_d_only(key_point_left_rect[i].x
                                                                 , key_point_left_rect[i].y
                                                                 , key_point_left_rect[i].z
