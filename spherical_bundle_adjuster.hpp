@@ -15,8 +15,8 @@
 class spherical_bundle_adjuster
 {
     public:
-    spherical_bundle_adjuster(double roll = 0, double pitch = 0, double yaw = 0)
-    : expected_roll(roll), expected_pitch(pitch), expected_yaw(yaw) {} 
+    spherical_bundle_adjuster(double roll = 0, double pitch = 0, double yaw = 0, double tx = 0, double ty = 0, double tz = 0, double d = 0)
+    : expected_roll(roll), expected_pitch(pitch), expected_yaw(yaw), expected_tx(tx), expected_ty(ty), expected_tz(tz), expected_d(d) {} 
     ~spherical_bundle_adjuster() {}
     
     void set_omp(int num_proc);
@@ -37,6 +37,10 @@ class spherical_bundle_adjuster
     double expected_roll;
     double expected_pitch;
     double expected_yaw;
+    double expected_tx;
+    double expected_ty;
+    double expected_tz;
+    double expected_d;
 
     int num_proc;
 };

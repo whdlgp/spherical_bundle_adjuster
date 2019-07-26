@@ -16,7 +16,9 @@ link_directories( ${ld_flag} )
 
 add_executable( ${CMAKE_PROJECT_NAME} ${SRCS} "main/main.cpp")
 add_executable( "feature_test.out" ${SRCS} "test/feature_test.cpp")
+add_executable( "E_matrix_test.out" ${SRCS} "test/E_matrix_test.cpp")
 
 target_link_libraries( ${CMAKE_PROJECT_NAME} ${libs} ${CMAKE_THREAD_LIBS_INIT} ${CERES_LIBRARIES} )
 target_link_libraries( "feature_test.out" ${libs} ${CMAKE_THREAD_LIBS_INIT} ${CERES_LIBRARIES} )
+target_link_libraries( "E_matrix_test.out" ${libs} ${CMAKE_THREAD_LIBS_INIT} ${CERES_LIBRARIES} )
 

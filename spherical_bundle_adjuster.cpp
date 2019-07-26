@@ -134,11 +134,11 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
     vector<array<double, 2>> init_d(match_size);
     for(int i = 0; i < match_size; i++)
     {
-        init_d[i][0] = 1;
-        init_d[i][1] = 1;
+        init_d[i][0] = expected_d;
+        init_d[i][1] = expected_d;
     }
     double init_rot[3] = {expected_roll/180*M_PI, expected_pitch/180*M_PI, expected_yaw/180*M_PI};
-    double init_tran[3] = {0.0, 0.0, 0.0};
+    double init_tran[3] = {expected_tx, expected_ty, expected_tz};
     
     // Set options and solve problem
     ceres::Solver::Options options;
@@ -159,13 +159,13 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
     log_file.open("log.txt", std::ios_base::app);
     log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
              << init_rot[0]/M_PI*180.0 << ',' << init_rot[1]/M_PI*180.0 << ',' << init_rot[2]/M_PI*180.0 << ',' 
-             << init_tran[0] << ',' << init_tran[0] << ',' << init_tran[0] << ','
+             << init_tran[0] << ',' << init_tran[1] << ',' << init_tran[2] << ','
              << match_size << endl; 
     log_file.close();
 
     write_d_circle(im_left, init_d, left_key, "d_found");
     write_log_d(init_d, "log_d");
-    
+    /*
     {// second initial value
         vector<KeyPoint> left_key2;
         vector<KeyPoint> right_key2;
@@ -201,7 +201,7 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
         log_file.open("log.txt", std::ios_base::app);
         log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
                 << init_rot2[0]/M_PI*180.0 << ',' << init_rot2[1]/M_PI*180.0 << ',' << init_rot2[2]/M_PI*180.0 << ',' 
-                << init_tran2[0] << ',' << init_tran2[0] << ',' << init_tran2[0] << ','
+                << init_tran2[0] << ',' << init_tran2[1] << ',' << init_tran2[2] << ','
                 << match_size << endl; 
         log_file.close();
         
@@ -243,7 +243,7 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
         log_file.open("log.txt", std::ios_base::app);
         log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
                 << init_rot3[0]/M_PI*180.0 << ',' << init_rot3[1]/M_PI*180.0 << ',' << init_rot3[2]/M_PI*180.0 << ',' 
-                << init_tran3[0] << ',' << init_tran3[0] << ',' << init_tran3[0] << ','
+                << init_tran3[0] << ',' << init_tran3[1] << ',' << init_tran3[2] << ','
                 << match_size << endl; 
         log_file.close();
 
@@ -288,7 +288,7 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
         log_file.open("log.txt", std::ios_base::app);
         log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
                 << init_rot4[0]/M_PI*180.0 << ',' << init_rot4[1]/M_PI*180.0 << ',' << init_rot4[2]/M_PI*180.0 << ',' 
-                << init_tran4[0] << ',' << init_tran4[0] << ',' << init_tran4[0] << ','
+                << init_tran4[0] << ',' << init_tran4[1] << ',' << init_tran4[2] << ','
                 << match_size << endl; 
         log_file.close();
 
@@ -346,7 +346,7 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
         log_file.open("log.txt", std::ios_base::app);
         log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
                 << init_rot5[0]/M_PI*180.0 << ',' << init_rot5[1]/M_PI*180.0 << ',' << init_rot5[2]/M_PI*180.0 << ',' 
-                << init_tran5[0] << ',' << init_tran5[0] << ',' << init_tran5[0] << ','
+                << init_tran5[0] << ',' << init_tran5[1] << ',' << init_tran5[2] << ','
                 << match_size << endl; 
         log_file.close();
 
@@ -433,7 +433,7 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
         log_file.open("log.txt", std::ios_base::app);
         log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
                 << init_rot6[0]/M_PI*180.0 << ',' << init_rot6[1]/M_PI*180.0 << ',' << init_rot6[2]/M_PI*180.0 << ',' 
-                << init_tran6[0] << ',' << init_tran6[0] << ',' << init_tran6[0] << ','
+                << init_tran6[0] << ',' << init_tran6[1] << ',' << init_tran6[2] << ','
                 << match_size << endl; 
         log_file.close();
 
@@ -521,7 +521,7 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
         log_file.open("log.txt", std::ios_base::app);
         log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
                 << init_rot7[0]/M_PI*180.0 << ',' << init_rot7[1]/M_PI*180.0 << ',' << init_rot7[2]/M_PI*180.0 << ',' 
-                << init_tran7[0] << ',' << init_tran7[0] << ',' << init_tran7[0] << ','
+                << init_tran7[0] << ',' << init_tran7[1] << ',' << init_tran7[2] << ','
                 << match_size << endl; 
         log_file.close();
 
@@ -622,14 +622,14 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
         log_file.open("log.txt", std::ios_base::app);
         log_file << expected_roll << ',' << expected_pitch << ',' << expected_yaw << ',' 
                 << init_rot8[0]/M_PI*180.0 << ',' << init_rot8[1]/M_PI*180.0 << ',' << init_rot8[2]/M_PI*180.0 << ',' 
-                << init_tran8[0] << ',' << init_tran8[0] << ',' << init_tran8[0] << ','
+                << init_tran8[0] << ',' << init_tran8[1] << ',' << init_tran8[2] << ','
                 << match_size << endl; 
         log_file.close();
 
         write_d_circle(im_left, init_d8, left_key8, "d_found8");
         write_log_d(init_d8, "log_d8");
     }
-
+     */
 
     // Save test match image and log file
     string file_name;
@@ -670,9 +670,9 @@ template <typename T> bool ba_spherical_costfunctor::operator()(const T *const d
     X1_RT[1] = X1_rotated[1] - t[1];
     X1_RT[2] = X1_rotated[2] - t[2];
 
-    residual[0] = (X2[0] - X1_RT[0])*(X2[0] - X1_RT[0]);
-    residual[1] = (X2[1] - X1_RT[1])*(X2[1] - X1_RT[1]);
-    residual[2] = (X2[2] - X1_RT[2])*(X2[2] - X1_RT[2]);
+    residual[0] = (X2[0] - X1_RT[0]);
+    residual[1] = (X2[1] - X1_RT[1]);
+    residual[2] = (X2[2] - X1_RT[2]);
 
     return true;
 }
@@ -721,9 +721,9 @@ template <typename T> bool ba_spherical_costfunctor_rot_only::operator()(const T
     X1_RT[1] = X1_rotated[1] - t_2_;
     X1_RT[2] = X1_rotated[2] - t_3_;
 
-    residual[0] = (X2[0] - X1_RT[0])*(X2[0] - X1_RT[0]);
-    residual[1] = (X2[1] - X1_RT[1])*(X2[1] - X1_RT[1]);
-    residual[2] = (X2[2] - X1_RT[2])*(X2[2] - X1_RT[2]);
+    residual[0] = (X2[0] - X1_RT[0]);
+    residual[1] = (X2[1] - X1_RT[1]);
+    residual[2] = (X2[2] - X1_RT[2]);
 
     return true;
 }
@@ -778,9 +778,9 @@ template <typename T> bool ba_spherical_costfunctor_tran_only::operator()(const 
     X1_RT[1] = X1_rotated[1] - t[1];
     X1_RT[2] = X1_rotated[2] - t[2];
 
-    residual[0] = (X2[0] - X1_RT[0])*(X2[0] - X1_RT[0]);
-    residual[1] = (X2[1] - X1_RT[1])*(X2[1] - X1_RT[1]);
-    residual[2] = (X2[2] - X1_RT[2])*(X2[2] - X1_RT[2]);
+    residual[0] = (X2[0] - X1_RT[0]);
+    residual[1] = (X2[1] - X1_RT[1]);
+    residual[2] = (X2[2] - X1_RT[2]);
 
     return true;
 }
@@ -832,9 +832,9 @@ template <typename T> bool ba_spherical_costfunctor_d_only::operator()(const T *
     X1_RT[1] = X1_rotated[1] - t_2_;
     X1_RT[2] = X1_rotated[2] - t_3_;
 
-    residual[0] = (X2[0] - X1_RT[0])*(X2[0] - X1_RT[0]);
-    residual[1] = (X2[1] - X1_RT[1])*(X2[1] - X1_RT[1]);
-    residual[2] = (X2[2] - X1_RT[2])*(X2[2] - X1_RT[2]);
+    residual[0] = (X2[0] - X1_RT[0]);
+    residual[1] = (X2[1] - X1_RT[1]);
+    residual[2] = (X2[2] - X1_RT[2]);
     residual[3] = lambda_*exp(-c_*d[0]);
     residual[4] = lambda_*exp(-c_*d[1]);
 
