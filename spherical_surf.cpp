@@ -146,8 +146,6 @@ void spherical_surf::do_all(const Mat& im_left, const Mat& im_right, vector<KeyP
     Mat left_n2 = crop_rotated_image(-45, im_left);
     DEBUG_PRINT_OUT("Rotate ROLL to -90, Crop Undistorted resion");
     Mat left_n3 = crop_rotated_image(-90, im_left);
-    imshow("test_n3", left_n3);
-    waitKey(0);
 
     DEBUG_PRINT_OUT("right image,");
     DEBUG_PRINT_OUT("Rotate ROLL to 45, Crop Undistorted resion");
