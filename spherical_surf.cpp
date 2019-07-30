@@ -57,9 +57,10 @@ Vec2i spherical_surf::rotate_pixel(const Vec2i& in_vec, Vec3f theta, int width, 
     vec_cartesian[2] = cos(vec_rad[0]);
 
     Vec3d vec_cartesian_rot;
-    vec_cartesian_rot[0] = rot_mat.at<double>(0, 0)*vec_cartesian[0] + rot_mat.at<double>(0, 1)*vec_cartesian[1] + rot_mat.at<double>(0, 2)*vec_cartesian[2];
-    vec_cartesian_rot[1] = rot_mat.at<double>(1, 0)*vec_cartesian[0] + rot_mat.at<double>(1, 1)*vec_cartesian[1] + rot_mat.at<double>(1, 2)*vec_cartesian[2];
-    vec_cartesian_rot[2] = rot_mat.at<double>(2, 0)*vec_cartesian[0] + rot_mat.at<double>(2, 1)*vec_cartesian[1] + rot_mat.at<double>(2, 2)*vec_cartesian[2];
+    double* rot_mat_data = (double*)rot_mat.data;
+    vec_cartesian_rot[0] = rot_mat_data[0]*vec_cartesian[0] + rot_mat_data[1]*vec_cartesian[1] + rot_mat_data[2]*vec_cartesian[2];
+    vec_cartesian_rot[1] = rot_mat_data[3]*vec_cartesian[0] + rot_mat_data[4]*vec_cartesian[1] + rot_mat_data[5]*vec_cartesian[2];
+    vec_cartesian_rot[2] = rot_mat_data[6]*vec_cartesian[0] + rot_mat_data[7]*vec_cartesian[1] + rot_mat_data[8]*vec_cartesian[2];
 
     Vec2d vec_rot;
     vec_rot[0] = acos(vec_cartesian_rot[2]);
@@ -80,6 +81,8 @@ Mat spherical_surf::crop_rotated_image(float pitch_rot, const Mat& im)
     int im_width = im.cols;
 
     Mat out(im_height/4, im_width, im.type());
+    Vec3b* out_data = (Vec3b*)out.data;
+    Vec3b* im_data = (Vec3b*)im.data;
 
     Mat2i im_pixel_rotate(im_height/4, im_width);
     
@@ -100,7 +103,7 @@ Mat spherical_surf::crop_rotated_image(float pitch_rot, const Mat& im)
             int out_j = vec_pixel[1];
             if((out_i >= 0) && (out_j >= 0) && (out_i < im_height) && (out_j < im_width))
             {
-                out.at<Vec3b>(i, j) = im.at<Vec3b>(out_i, out_j);
+                out_data[i*im_width + j] = im_data[out_i*im_width + out_j];
             }
         }
     }
@@ -143,6 +146,8 @@ void spherical_surf::do_all(const Mat& im_left, const Mat& im_right, vector<KeyP
     Mat left_n2 = crop_rotated_image(-45, im_left);
     DEBUG_PRINT_OUT("Rotate ROLL to -90, Crop Undistorted resion");
     Mat left_n3 = crop_rotated_image(-90, im_left);
+    imshow("test_n3", left_n3);
+    waitKey(0);
 
     DEBUG_PRINT_OUT("right image,");
     DEBUG_PRINT_OUT("Rotate ROLL to 45, Crop Undistorted resion");
