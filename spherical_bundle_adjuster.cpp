@@ -192,6 +192,12 @@ void spherical_bundle_adjuster::solve_problem(ceres::Solver::Options& opt
     Problem problem_tran;
     Problem problem_d;
     Solver::Summary summary;
+
+    ba_spherical_costfunctor_d_only::add_residual(problem_d, key_point_left_rect, key_point_right_rect, init_rot, init_tran, init_d, match_num);
+    Solve(opt, &problem_d, &summary);
+    std::cout << summary.BriefReport() << "\n";
+    std::cout << "Given thread: " << summary.num_threads_given << std::endl;
+    std::cout << "Used thread: " << summary.num_threads_used << std::endl;
     
     ba_spherical_costfunctor_rot_only::add_residual(problem_rot, key_point_left_rect, key_point_right_rect, init_rot, init_tran, init_d, match_num);
     Solve(opt, &problem_rot, &summary);
@@ -201,12 +207,6 @@ void spherical_bundle_adjuster::solve_problem(ceres::Solver::Options& opt
 
     ba_spherical_costfunctor_tran_only::add_residual(problem_tran, key_point_left_rect, key_point_right_rect, init_rot, init_tran, init_d, match_num);
     Solve(opt, &problem_tran, &summary);
-    std::cout << summary.BriefReport() << "\n";
-    std::cout << "Given thread: " << summary.num_threads_given << std::endl;
-    std::cout << "Used thread: " << summary.num_threads_used << std::endl;
-
-    ba_spherical_costfunctor_d_only::add_residual(problem_d, key_point_left_rect, key_point_right_rect, init_rot, init_tran, init_d, match_num);
-    Solve(opt, &problem_d, &summary);
     std::cout << summary.BriefReport() << "\n";
     std::cout << "Given thread: " << summary.num_threads_given << std::endl;
     std::cout << "Used thread: " << summary.num_threads_used << std::endl;
