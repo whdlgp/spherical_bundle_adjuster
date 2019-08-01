@@ -23,6 +23,17 @@ class spherical_bundle_adjuster
     void do_bundle_adjustment(const cv::Mat &im_left, const cv::Mat &im_right);
     
     private:
+    double max_vec(cv::Vec3f& vec);
+    void eight_point_estimation(int im_width, int im_height
+                                , std::vector<cv::Point3d>& key_point_left_rect, std::vector<cv::Point3d>& key_point_right_rect
+                                , cv::Vec3f& R1_vec, cv::Vec3f& R2_vec, cv::Vec3f& T_vec
+                                , bool& R1_valid, bool& R2_valid
+                                , int match_size);
+    void initial_guess(int im_width, int im_height
+                        , std::vector<cv::Point3d>& key_point_left_rect, std::vector<cv::Point3d>& key_point_right_rect
+                        , cv::Vec3f& R_vec_out, cv::Vec3f& T_vec_out
+                        , int match_size);
+
     void solve_problem(ceres::Solver::Options& opt
                     , std::vector<cv::Point3d>& key_point_left_rect
                     , std::vector<cv::Point3d>& key_point_right_rect
@@ -166,4 +177,35 @@ struct ba_spherical_costfunctor_d_only
     const double r_3_;
     const double lambda_;
     const double c_;
+};
+
+class random_array
+{
+    public:
+    random_array(int size)
+    : rand_arr(size)
+    {
+        size_ = size;
+        count_ = 0;
+        rand_idx_generate();
+    }
+
+    int get_rand()
+    {
+        int retval = rand_arr[count_];
+        count_++;
+        count_ = count_ % size_;
+        return retval;
+    }
+
+    private:
+    int size_;
+    std::vector<int> rand_arr;
+    int count_;
+
+    void rand_idx_generate()
+    {
+        std::iota(rand_arr.begin(), rand_arr.end(), 0);
+        std::random_shuffle(rand_arr.begin(), rand_arr.end());
+    }
 };
