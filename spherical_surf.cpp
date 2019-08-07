@@ -45,10 +45,8 @@ Mat spherical_surf::eular2rot(Vec3f theta)
 }
 
 // rotate pixel, in_vec as input(row, col)
-Vec2i spherical_surf::rotate_pixel(const Vec2i& in_vec, Vec3f theta, int width, int height)
+Vec2i spherical_surf::rotate_pixel(const Vec2i& in_vec, Mat& rot_mat, int width, int height)
 {
-    Mat rot_mat = eular2rot(theta);
-
     Vec2d vec_rad = Vec2d(M_PI*in_vec[0]/height, 2*M_PI*in_vec[1]/width);
 
     Vec3d vec_cartesian;
@@ -85,7 +83,7 @@ Mat spherical_surf::crop_rotated_image(float pitch_rot, const Mat& im)
     Vec3b* im_data = (Vec3b*)im.data;
 
     Mat2i im_pixel_rotate(im_height/4, im_width);
-    
+    Mat rot_mat = eular2rot(Vec3f(0, RAD(pitch_rot), 0));
     #pragma omp parallel for
     for(int i = 0; i < im_height/4; i++)
     {
@@ -94,9 +92,7 @@ Mat spherical_surf::crop_rotated_image(float pitch_rot, const Mat& im)
             int offset_i = i+im_height*3/8;
             // inverse warping
             Vec2i vec_pixel = rotate_pixel(Vec2i(offset_i, j) 
-                                         , Vec3f(0
-                                               , RAD(pitch_rot)
-                                               , 0)
+                                         , rot_mat
                                          , im_width, im_height);
 
             int out_i = vec_pixel[0];
@@ -113,14 +109,13 @@ Mat spherical_surf::crop_rotated_image(float pitch_rot, const Mat& im)
 
 void spherical_surf::rotate_keypoint(float pitch_rot_inv, vector<KeyPoint>& key, int width, int height)
 {
+    Mat rot_mat = eular2rot(Vec3f(0, RAD(pitch_rot_inv), 0));
     #pragma omp parallel for
     for(int i = 0; i < key.size(); i++)
     {
         int offset_i = key[i].pt.y+height*3/8;
         Vec2i vec_pixel = rotate_pixel(Vec2i(offset_i, key[i].pt.x) 
-                                     , Vec3f(0
-                                           , RAD(pitch_rot_inv)
-                                           , 0)
+                                     , rot_mat
                                      , width, height);
         key[i].pt.x = vec_pixel[1];
         key[i].pt.y = vec_pixel[0];

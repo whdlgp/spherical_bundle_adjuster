@@ -13,7 +13,7 @@ class spherical_surf
     void do_all(const cv::Mat &im_left, const cv::Mat &im_right, std::vector<cv::KeyPoint>& left_key, std::vector<cv::KeyPoint>& right_key, int& match_size, cv::Mat& match_output, int& total_key_num);
 
     cv::Mat eular2rot(cv::Vec3f theta);
-    cv::Vec2i rotate_pixel(const cv::Vec2i& in_vec, cv::Vec3f theta, int width, int height);
+    cv::Vec2i rotate_pixel(const cv::Vec2i& in_vec, cv::Mat& rot_mat, int width, int height);
     
     private:
     cv::Mat crop_rotated_image(float pitch_rot, const cv::Mat& im);

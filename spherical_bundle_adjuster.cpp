@@ -305,16 +305,29 @@ void spherical_bundle_adjuster::do_bundle_adjustment(const cv::Mat &im_left, con
                     , key_point_left_rect, key_point_right_rect
                     , R_vec_out, T_vec_out
                     , match_size);
+    Mat R = fm.eular2rot(R_vec_out);
+    double* rot_mat_data = (double*)R.data;
                     
     vector<array<double, 2>> init_d(match_size);
     for(int i = 0; i < match_size; i++)
     {
+        Point3d left_p = key_point_left_rect[i];
+        Point3d right_p = key_point_right_rect[i];
+        Point3d right_p_rot;
+        right_p_rot.x = rot_mat_data[0]*right_p.x + rot_mat_data[1]*right_p.y + rot_mat_data[2]*right_p.z;
+        right_p_rot.y = rot_mat_data[3]*right_p.x + rot_mat_data[4]*right_p.y + rot_mat_data[5]*right_p.z;
+        right_p_rot.z = rot_mat_data[6]*right_p.x + rot_mat_data[7]*right_p.y + rot_mat_data[8]*right_p.z;
+        
+        double theta[2];
+        theta[0] = acos(left_p.x*T_vec_out[0] + left_p.y*T_vec_out[1] + left_p.z*T_vec_out[2]);
+        theta[1] = M_PI - acos(right_p_rot.x*T_vec_out[0] + right_p_rot.y*T_vec_out[1] + right_p_rot.z*T_vec_out[2]);
+
         init_d[i][0] = expected_d;
         init_d[i][1] = expected_d;
     }
     //double init_rot[3] = {expected_roll/180*M_PI, expected_pitch/180*M_PI, expected_yaw/180*M_PI};
     //double init_tran[3] = {expected_tx, expected_ty, expected_tz};
-    double init_rot[3] = {R_vec_out[0], R_vec_out[1], R_vec_out[2]};
+    double init_rot[3] = {-R_vec_out[0], -R_vec_out[1], -R_vec_out[2]};
     double init_tran[3] = {T_vec_out[0], T_vec_out[1], T_vec_out[2]};
     
     // Set options and solve problem
